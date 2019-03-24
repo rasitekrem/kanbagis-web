@@ -1,0 +1,165 @@
+<% include ./partials/header %>
+  <script type="text/javascript">
+  $(document).ready(function() {
+    const data = <%- JSON.stringify(sehirler) %>;
+    $( "#il" ).change(() => {
+      if ($('#il option:selected').text() == 'Tümü') {
+        $('#ilce').html('<option>Tümü</option>');
+        $("#ilce").prop('disabled', true);
+      } else {
+        let plaka = $('#il').val();
+        let innerHTML = '<option>Tümü</option>'
+
+         data[plaka-1].ilceleri.forEach((ilce) => {
+                innerHTML += '<option>'+ilce+'</option>';
+              });
+        $('#ilce').html(innerHTML);
+        $("#ilce").prop('disabled', false);
+      }
+
+    });
+    $("#searchButton").click(function() {
+      let il = '';
+      let ilce = '';
+      if ($('#il option:selected').text() != 'Tümü') {
+          il = $('#il option:selected').text();
+          if ($('#ilce option:selected').text() != 'Tümü') {
+           ilce = $('#ilce option:selected').text();
+          }
+      }
+      let data = {
+        il: il,
+        ilce: ilce,
+        kanGrubu: $('#kanGrubu').val(),
+        visibility: 'true'
+      };
+      $.post('search', {
+          data: data
+        })
+        .then((searchResult) => {
+          $('#cardBody').html('');
+          $('#resultCount').text("SONUÇLAR ("+ searchResult.length +")") ;
+          for(var i=0;i<searchResult.length;i++){
+             $('#cardBody').append( '<div class="col-sm-4 col-md-3 p-1" >'
+                                      + '<div class="card text-center">'
+                                      +  '<div class="card-body">'
+                                      +  '<h5 class="card-title" id="nameSurname">'+searchResult[i].nameSurname+'</h5>'
+                                      +  '<ul class="list-group list-group-flush">'
+                                      +  '<li class="list-group-item" id="kanGrubu">'+searchResult[i].kanGrubu+'</li>'
+                                      +  '<li class="list-group-item" id="lokasyon">'+searchResult[i].ilce+'/'+searchResult[i].il+'</li>'
+                                      +   '</ul>'
+                                      +    '<div id="'+searchResult[i]._id+'"><button type="button" id="detail" class="btn btn-outline-info btn-block" data-toggle="modal" data-target="#exampleModal">Detaylı Bilgi</button></diV>'
+                                      +    '</div></div></div>') ;
+          }
+
+              $('#searchResult').show();
+        });
+    });
+    $("#cardBody").on("click", "#detail", function() {
+           $.post('getDetail', {
+               id: $(this).parent()[0].id
+             })
+             .then((searchResult) => {
+               $('#title').text(searchResult.nameSurname);
+               $('#telefon').text(searchResult.phoneNumber);
+               $('#adres').text(searchResult.adres+" "+searchResult.ilce+"/"+searchResult.il.toUpperCase());
+               $('#kangrubu').text(searchResult.kanGrubu);
+               $('#mail').text(searchResult.mail);
+               let adres = searchResult.adres.replace(' ', '+');
+               $('#googleMap').attr('src',"//www.google.com/maps/embed/v1/place?q="+adres+"+"+searchResult.ilce+"+"+searchResult.il
+               +"&zoom=17&key=AIzaSyCfYeWS2GHEJtl7_BqRC5UMpdDMNR0Xgok");
+             });
+    });
+  });
+
+  </script>
+  <div class="container-fluid mt-2">
+    <h2 class="text-center">Kan Bağışlayanlar</h2>
+    <div class="mx-auto row">
+      <div class="col-sm-3">
+        <div class="card m-2 mx-auto">
+          <div class="card-body">
+            <form>
+
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="">İlçe</span>
+                </div>
+                <select class="form-control" id="ilce" name="ilce" required disabled>
+                    <option>Tümü</option>
+              </select>
+              </div>
+
+
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="">İl</span>
+                </div>
+                <select class="form-control" id="il" name="il" required>
+                  <option >Tümü</option>
+                  <% sehirler.forEach((val) => { %>
+                    <option value=<%= val.plaka %> ><%= val.il %></option>
+                  <% }); %>
+                </select>
+              </div>
+
+
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="">Kan Grubu</span>
+                </div>
+                <select class="form-control" id="kanGrubu" name="kanGrubu">
+                      <% kanGruplari.forEach((val) => { %>
+                        <option><%=val %> </option>
+                      <% }); %>
+                    </select>
+              </div>
+            </form>
+            <button type="button" id="searchButton" class="btn btn-success btn-block">Ara</button>
+          </div>
+
+        </div>
+      </div>
+      <div class="col-sm-9 mx-auto" id="searchResult" style="display:none">
+        <div class="card">
+          <div class="card-header text-center" id="resultCount">
+
+          </div>
+          <div class="card-body">
+            <div class="row" id="cardBody">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal fade"  tabindex="-1" role="dialog" id="exampleModal">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-center" id="title"></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+
+            <ul class="list-group list-group-flush  mx-auto">
+              <li class="list-group-item" id="telefon"></li>
+              <li class="list-group-item" id="mail"></li>
+              <li class="list-group-item" id="adres"></li>
+              <li class="list-group-item" id="kangrubu"></li>
+            </ul>
+            <div class="embed-responsive embed-responsive-16by9">
+              <iframe id="googleMap" class="embed-responsive-item" src="" allowfullscreen></iframe>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <% include ./partials/footer %>

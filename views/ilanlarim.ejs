@@ -1,0 +1,262 @@
+<% include ./partials/header %>
+ <script type="text/javascript">
+    $(document).ready(() => {
+      const sehir = <%- JSON.stringify(sehirler) %>;
+      $( "#duzenleil" ).change(() => {
+        let plaka = $('#duzenleil').val();
+        let innerHTML = '';
+        if (plaka) {
+          sehir[plaka-1].ilceleri.forEach((ilce,index) => {
+                 innerHTML += '<option id=duzenleilce'+index+'>'+ilce+'</option>';
+               });
+         $('#duzenleilce').html(innerHTML);
+        }
+
+      });
+      $( "#il" ).change(() => {
+        let plaka = $('#il').val();
+        let innerHTML = ''
+         sehir[plaka-1].ilceleri.forEach((ilce,index) => {
+                innerHTML += '<option id=ilce'+index+'>'+ilce+'</option>';
+              });
+        $('#ilce').html(innerHTML);
+      });
+      function ilanListele() {
+        $.post( "/ilanlistele")
+          .done(( data ) => {
+                $('#tableBody').text('');
+                let index = 1;
+                for(let id in data){
+                    let aciklama = 'Açıklama bulunmuyor';
+                    if (data[id].aciklama != '') {
+                        aciklama = data[id].aciklama;
+                        if (aciklama.length > 30) {
+                          aciklama = aciklama.substr(0,30)+"...";
+                        }
+                    }
+                    $('#tableBody').append('<tr class="list" style="cursor: pointer;" id="'+id+'" ><td>'+(index)+'</td>'
+                  + '<td>'+data[id].ilce+'/'+data[id].il+'</td>'
+                  + '<td>'+data[id].kanGrubu + '</td>'
+                  + '<td>'+ aciklama + '</td>'
+                );
+                index+=1;
+              }
+            });
+      }
+      ilanListele();
+
+      $('#tableBody').on("click",".list", (event) => {
+          $.post('/vericek',"id="+ event.currentTarget.id)
+            .done((data) => {
+                $('#duzenleaciklama').val(data.aciklama);
+
+                let select = $('#selectBlood').children();
+                $('#selectBlood option:selected').removeProp('selected');
+                for (let i = 0; i < select.length; i++) {
+
+                  if (select[i].text === data.kanGrubu) {
+                  $('#'+select[i].id).prop('selected','selected');
+
+                }
+                }
+
+                let il = $('#duzenleil').children();
+                $('#duzenleil option:selected').removeProp('selected');
+                for (let i = 0; i < il.length; i++) {
+                  if (il[i].text === data.il) {
+                  $('#'+il[i].id).prop('selected','selected');
+                  break;
+                }}
+                $('#duzenleil').change();
+                let ilce = $('#duzenleilce').children();
+                $('#duzenleilce option:selected').removeProp('selected');
+                for (let i = 0; i < ilce.length; i++) {
+                  if (ilce[i].text === data.ilce) {
+                  $('#'+ilce[i].id).prop('selected','selected');
+                  break;
+                }}
+                $('#_id').val(event.currentTarget.id);
+                $('#edit').modal('show');
+            });
+      });
+      $('#sil').click(() => {
+          $.post('/sil',"id="+$('#_id').val())
+          .then((result) => {
+            if (result == 'success') {
+              ilanListele();
+              $('#alert').removeClass().addClass('alert alert-success');
+              $('#alert').text('Silme Başarılı');
+            } else {
+              $('#alert').removeClass().addClass('alert alert-danger');
+              $('#alert').text('Silme Başarısız!!');
+            }
+          });
+
+      });
+      $('#apply').click(() => {
+        $.post('/duzenle', $('.duzenle').serialize())
+        .then((result) => {
+          if (result == 'success') {
+            ilanListele();
+            $('#alert').removeClass().addClass('alert alert-success');
+            $('#alert').text('Güncelleme Başarılı');
+          } else {
+            $('#alert').removeClass().addClass('alert alert-danger');
+            $('#alert').text('Güncelleme Başarısız!!');
+          }
+        })
+
+      });
+    });
+ </script>
+ <div class="container">
+   <div class="table-responsive">
+
+      <table class="table table-hover">
+        <thead>
+          <tr class="text-center">
+            <th></th>
+            <th colspan="2">
+              <h3>İlanlar</h3> </th>
+            <th><button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#myModal"><i class="fas fa-plus"></i> Yeni İlan</button></th>
+          </tr>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">İlçe/İl</th>
+            <th scope="col">Kan Grubu</th>
+            <th scope="col">Açıklama</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+
+        </tbody>
+      </table>
+      <div id="alert">
+
+      </div>
+   </div>
+    <div class="modal fade" id="myModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">İlan Ekle</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form action="/ilanEkle" method="POST">
+              <div class="form-group">
+                <select class="form-control" name="kanGrubu" required>
+              <% kanGruplari.forEach((val) => { %>
+                <option><%=val %> </option>
+              <% }); %>
+            </select>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                  <div class="input-group">
+                      <select class="form-control" id="ilce" name="ilce" required>
+                        <% sehirler[0].ilceleri.forEach((val,index) => { %>
+                          <option id='ilce<%=index%>'><%= val %> </option>
+                        <% }); %>
+                    </select>
+                      <select class="form-control" id="il" name="il" required>
+                        <% sehirler.forEach((val) => { %>
+                          <option id='il<%=val.plaka%>' value=<%= val.plaka %> ><%= val.il %> </option>
+                        <% }); %>
+                      </select>
+                    </div>
+                </div>
+
+              </div>
+              <div class="form-group">
+                <div class="text-center">
+                  <div id="alert">
+
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <textarea class="form-control" name="aciklama" rows="3" placeholder="Açıklama Giriniz (Zorunlu Değil)"></textarea>
+              </div>
+              <div class="form-group">
+                <div class="text-center">
+                  <button type="submit" class="btn btn-success btn-block">Ekle</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Kapat</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="edit">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">Düzenle</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form method="POST" class="duzenle">
+              <div class="form-group">
+                <select id='selectBlood' class="form-control" name="kanGrubu" required>
+              <%
+               kanGruplari.forEach((val,index) => { %>
+                  <option id='option<%= index%>' ><%=val %> </option>
+              <% }); %>
+            </select>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                    <select class="form-control" id="duzenleilce" name="ilce" required>
+                      <% sehirler[0].ilceleri.forEach((val,index) => { %>
+                        <option id='duzenleilce<%=index%>'><%= val %> </option>
+                      <% }); %>
+                  </select>
+                    <select class="form-control" id="duzenleil" name="il" required>
+                      <% sehirler.forEach((val) => { %>
+                        <option id='duzenleil<%=val.plaka%>' value=<%= val.plaka %> ><%= val.il %> </option>
+                      <% }); %>
+                    </select>
+                  </div>
+
+              </div>
+              <div class="form-group">
+                <textarea  id="duzenleaciklama" class="form-control" name="aciklama" rows="3" placeholder="Açıklama Giriniz (Zorunlu Değil)"></textarea>
+              </div>
+              <div class="form-group row">
+                    <div class="col-sm-6">
+                      <button type="button" id="apply" class="btn btn-success btn-block" data-dismiss="modal">Uygula</button>
+                    </div>
+                    <div class="col-sm-6">
+                      <button type="button" id="sil" class="btn btn-danger btn-block" data-dismiss="modal" >Sil</button>
+                    </div>
+                    <input type="text" name="id" id="_id" hidden>
+
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Kapat</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <% include ./partials/footer %>

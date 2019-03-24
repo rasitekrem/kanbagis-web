@@ -1,0 +1,38 @@
+<% include ./partials/header %>
+  <div class="container">
+    <div class="row mt-5">
+      <div class="col-sm-4"></div>
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <form action="/signin" method="POST">
+              <div class="form-group">
+                <h2 class="text-center">Giriş Yap</h2>
+              </div>
+              <hr>
+              <div class="form-group">
+                <label for="username" class="col-form-label" >Kullanıcı Adınız</label>
+                <input type="text" class="form-control" name="username" id="username" placeholder="Kullanıcı Adı" required autofocus>
+              </div>
+              <div class="form-group">
+                <label for="password" class="col-form-label">Parolanız</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Parola" required>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-success btn-block">Giriş Yap</button>
+              </div>
+              <div id="alert" class="alert alert-danger" role="alert" style="display: <%= global.display %>">
+                    Kullanıcı adı ya da parola hatalı!!
+              </div>
+              <div class="form-group">
+                <a class="text-primary" href="/signup">Hesabınız yok mu? Hesap oluşturun.</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+      <div class="col-sm-4"></div>
+    </div>
+  </div>
+<% include ./partials/footer %>

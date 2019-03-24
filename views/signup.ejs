@@ -1,0 +1,120 @@
+<% include ./partials/header %>
+<script>
+$( document ).ready(function() {
+  const data = <%- JSON.stringify(sehirler) %>;
+  $( "#il" ).change(() => {
+    let plaka = $('#il').val();
+    let innerHTML = ''
+     data[plaka-1].ilceleri.forEach((ilce) => {
+            innerHTML += '<option>'+ilce+'</option>';
+          });
+    $('#ilce').html(innerHTML);
+  });
+
+});
+
+ </script>
+  <div class="container">
+    <div class="row mt-5">
+      <div class="col-sm-3"></div>
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <h2 class="text-center">Kayıt Ol</h2>
+            </div>
+            <hr>
+            <form action="/signup" method="POST">
+              <div class="form-group">
+                <input type="email" class="form-control" name="mail" id="mail" placeholder="Mail Adresinizi Giriniz" required>
+                <div class="invalid-feedback text-right">Geçersiz E-Posta</div>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                  <input type="password" class="form-control" name="password" id="password" placeholder="Parolanızı Giriniz" required>
+                  <input type="password" class="form-control" name="passwordAgain" id="passwordAgain" placeholder="Yeniden Parolanızı Giriniz" required>
+                  <div class="invalid-feedback text-right">Parolalar uyuşmuyor!!</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                  <input type="text" class="form-control" name="name" placeholder="Ad" required>
+                  <input type="text" class="form-control" name="surname" placeholder="Soyad" required>
+                </div>
+
+              </div>
+              <div class="form-group">
+                <input type="number" class="form-control" name="phoneNumber" placeholder="(5__) ___ __ __" required>
+              </div>
+              <div class="form-group">
+                <select class="form-control" name="kanGrubu" required>
+                  <% kanGruplari.forEach((val) => { %>
+                    <option><%=val %> </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                  <input type="text" class="form-control"  name="caddesokak" placeholder="Cadde/Sokak" required>
+                  <input type="text" class="form-control"  name="mahalle" placeholder="Mahalle" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="input-group">
+                  <select class="form-control" id="il" name="il" required>
+                    <% sehirler.forEach((val) => { %>
+                      <option value=<%= val.plaka %> ><%= val.il %> </option>
+                    <% }); %>
+                  </select>
+                    <select class="form-control" id="ilce" name="ilce" required>
+                      <% sehirler[0].ilceleri.forEach((val) => { %>
+                        <option><%= val %> </option>
+                      <% }); %>
+                  </select>
+                </div>
+
+              </div>
+              <div class="form-group">
+                <div class="form-check">
+                  <label class="form-check-label">
+                        <input type="checkbox" name="check" class="form-check-input" value="check">Aramalarda Gözükmek istiyor musunuz?
+                    </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="text-center">
+                  <div id="alert">
+
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="text-center">
+                  <button type="submit" class="btn btn-success btn-block">Kayıt Ol</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <a class="text-primary" href="/signin">Hesabınız var mı? O zaman giriş yapın.</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3"></div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    var password = document.getElementById("password"),
+      confirm_password = document.getElementById("passwordAgain");
+
+    function validatePassword() {
+      if (password.value != confirm_password.value) {
+        confirm_password.setCustomValidity("Parolalar uyuşmuyor!!");
+      } else {
+        confirm_password.setCustomValidity('');
+      }
+    }
+    password.onkeyup = validatePassword;
+    confirm_password.onkeyup = validatePassword;
+  </script>
+  <% include ./partials/footer %>

@@ -1,0 +1,240 @@
+<% include ./partials/header %>
+  <script type="text/javascript">
+    $(document).ready(() => {
+      const data = <%- JSON.stringify(sehirler) %>;
+      $( "#il" ).change(() => {
+        let plaka = $('#il').val();
+        let innerHTML = ''
+         data[plaka-1].ilceleri.forEach((ilce,index) => {
+                innerHTML += '<option id=ilce'+index+'>'+ilce+'</option>';
+              });
+        $('#ilce').html(innerHTML);
+      });
+      $('#account').click(() => {
+        $( "#alertpassword" ).removeClass();
+        $( "#alertpassword" ).text('');
+        $('#profileModal').hide();
+        $('#accountModal').show();
+      });
+      $('#profile').click(() => {
+        $.post('/profileinfo').done((user) => {
+          $('#nameSurname').val(user.nameSurname);
+          $('#phoneNumber').val(user.phoneNumber);
+          $('#adres').val(user.adres);
+          let select = $('#selectBlood').children();
+          for (let i = 0; i < select.length; i++) {
+            if (select[i].text === user.kanGrubu) {
+            $('#'+select[i].id).attr('selected','selected');
+            break;
+          }}
+          let il = $('#il').children();
+          for (let i = 0; i < il.length; i++) {
+            if (il[i].text === user.il) {
+            $('#'+il[i].id).attr('selected','selected');
+            break;
+          }}
+          $('#il').change();
+          let ilce = $('#ilce').children();
+          for (let i = 0; i < ilce.length; i++) {
+            if (ilce[i].text === user.ilce) {
+            $('#'+ilce[i].id).attr('selected','selected');
+            break;
+          }}
+
+          if (user.visibility === 'true') {
+                $('#checkbox').prop('checked', true);
+          }
+        });
+            $( "#alertprofile" ).removeClass();
+            $( "#alertprofile" ).text('');
+            $('#accountModal').hide();
+            $('#profileModal').show();
+      });
+      $('#accountRemove').click(() => {
+            $.post('/accountremove').done(() =>{
+              $(location).attr('href','/');
+            });
+      });
+      $('#savePassword').click(() => {
+            $.post('/passwordchange',$('#password-form').serialize()).done((result) => {
+                if (result === "passworderror") {
+                  $( "#alertpassword" ).removeClass().addClass( "alert alert-danger" );
+                  $('#alertpassword').text('Eski Parola Hatalı!!');
+                } else if(result === "saveerror"){
+                  $( "#alertpassword" ).removeClass().addClass( "alert alert-warning" );
+                  $('#alertpassword').text('Kayıtta Sorun Oluştu!!');
+                  $('#oldpassword').val('');
+                  $('#newpassword').val('');
+                  $('#newpasswordagain').val('');
+                } else {
+                  $( "#alertpassword" ).removeClass().addClass( "alert alert-success" );
+                  $('#alertpassword').text('Parola Değiştirildi :)');
+                  $('#oldpassword').val('');
+                  $('#newpassword').val('');
+                  $('#newpasswordagain').val('');
+                }
+            });
+      });
+      $('#saveProfile').click(() => {
+          $.post('/profileupdate',$('#profileupdate').serialize()).done((result) => {
+            if (result === "error") {
+              $( "#alertprofile" ).removeClass().addClass( "alert alert-danger" );
+              $('#alertprofile').text('Kayıt Başarısız!!');
+            } else {
+              $( "#alertprofile" ).removeClass().addClass( "alert alert-success" );
+              $('#alertprofile').text('Profil Güncellendi :)');
+            }
+          });
+      });
+    });
+  </script>
+  <div class="container mt-2">
+    <div class="row">
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <button type="button" class="btn btn-outline-primary btn-block" id="account">Hesap Ayarları</button>
+            <button type="button" class="btn btn-outline-primary btn-block" id="profile">Profil Ayarları</button>
+            <button type="button" class="btn btn-outline-danger btn-block" data-toggle="modal" data-target="#removeModal" id="accountRemoveModal">Hesap Sil</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-8">
+        <div class="card" id="accountModal">
+          <div class="card-body">
+            <h5 class="card-title text-center">Parolayı Değiştirin</h5>
+            <form method="post" id="password-form">
+              <div class="form-group">
+                <label for="oldpassword">Eski Parolanız</label>
+                <input type="password" class="form-control" name="oldpassword" id="oldpassword" required>
+              </div>
+              <div class="form-group">
+                <label for="newpassword">Yeni Parolanız</label>
+                <input type="password" class="form-control" name="newpassword" id="newpassword" required>
+              </div>
+              <div class="form-group">
+                <label for="newpasswordagain">Yeni Parolanız Yeniden</label>
+                <input type="password" class="form-control" name="newpasswordagain" id="newpasswordagain" required>
+                <div class="invalid-feedback text-right">Parolalar uyuşmuyor!!</div>
+              </div>
+              <div class="form-group row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4">
+                  <button type="button" id="savePassword" class="btn btn-outline-success btn-block">Kaydet</button>
+                </div>
+                <div class="col-sm-4"></div>
+              </div>
+              <div class="form-group">
+                <div id="alertpassword" class="alert" role="alert">
+
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="card" id="profileModal" style="display:none">
+          <div class="card-body">
+            <h5 class="card-title text-center" >Profilinizi Güncelleyin</h5>
+            <form method="post" id="profileupdate">
+              <div class="form-group">
+                <label for="nameSurname">Ad Soyad</label>
+                <input type="text" class="form-control" name="nameSurname" id="nameSurname" required>
+              </div>
+              <div class="form-group">
+                <label for="phoneNumber">Telefon Numarası</label>
+                <input type="number" class="form-control" name="phoneNumber" id="phoneNumber" required>
+              </div>
+              <div class="form-group">
+                <label for="selectBlood">Kan Grubu</label>
+                <select id='selectBlood' class="form-control" name="kanGrubu" required>
+              <% kanGruplari.forEach((val,index) => { %>
+                  <option id='option<%= index%>' ><%=val %> </option>
+              <% }); %>
+              </select>
+            </div>
+              <div class="form-group">
+                <label for="adres">Cadde/Sokak - Mahalle</label>
+                <input type="text" class="form-control" name="adres" id="adres" required>
+              </div>
+
+              <div class="form-group row">
+                <div class="col-sm-6">
+                  <label for="ilce">İlçe</label>
+                  <select class="form-control" id="ilce" name="ilce" required>
+                    <% sehirler[0].ilceleri.forEach((val,index) => { %>
+                      <option id='ilce<%=index%>'><%= val %> </option>
+                    <% }); %>
+                </select>
+                </div>
+                <div class="col-sm-6">
+                  <label for="il">İl</label>
+                  <select class="form-control" id="il" name="il" required>
+                    <% sehirler.forEach((val) => { %>
+                      <option id='il<%=val.plaka%>' value=<%= val.plaka %> ><%= val.il %> </option>
+                    <% }); %>
+                  </select>
+                </div>
+
+              </div>
+              <div class="form-group">
+                <div class="form-check">
+                  <label class="form-check-label">
+                                <input id="checkbox" type="checkbox" name="check" class="form-check-input" value="check">Aramalarda Gözükmek istiyor musunuz?
+                            </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="text-center">
+                  <div id="alertprofile">
+
+                  </div>
+                </div>
+              </div>
+              <div class="form-group row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4">
+                  <button type="button" id="saveProfile" class="btn btn-outline-success btn-block">Kaydet</button>
+                </div>
+                <div class="col-sm-4"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal" id="removeModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Hesap Sil</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+          </div>
+          <div class="modal-body">
+            <p>Tüm verileriniz silinecektir, emin misiniz?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" id="accountRemove">Evet</button>
+            <button type="button" class="btn btn-success" data-dismiss="modal">Hayır</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+  var password = document.getElementById("newpassword"),
+    confirm_password = document.getElementById("newpasswordagain");
+
+  function validatePassword() {
+    if (password.value != confirm_password.value) {
+      confirm_password.setCustomValidity("Parolalar uyuşmuyor!!");
+    } else {
+      confirm_password.setCustomValidity('');
+    }
+  }
+  password.onkeyup = validatePassword;
+  confirm_password.onkeyup = validatePassword;
+  </script>
+  <% include ./partials/footer %>

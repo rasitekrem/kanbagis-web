@@ -1,0 +1,188 @@
+<% include ./partials/header %>
+<script type="text/javascript" >
+$(document).ready(function() {
+  $( document ).ready(function() {
+    const data = <%- JSON.stringify(sehirler) %>;
+    $( "#il" ).change(() => {
+      if ($('#il option:selected').text() == 'Tümü') {
+        $('#ilce').html('<option>Tümü</option>');
+        $("#ilce").prop('disabled', true);
+      } else {
+        let plaka = $('#il').val();
+        let innerHTML = '<option>Tümü</option>'
+
+         data[plaka-1].ilceleri.forEach((ilce) => {
+                innerHTML += '<option>'+ilce+'</option>';
+              });
+        $('#ilce').html(innerHTML);
+        $("#ilce").prop('disabled', false);
+      }
+
+    });
+
+  });
+ function search(searchResult) {
+   $('#tableBody').text('');
+    $('#resultCount').text("İlanlar ("+ searchResult.length +")") ;
+    searchResult.forEach((val,index) => {
+        let aciklama = 'Açıklama bulunmuyor';
+        if (val.aciklama != '') {
+            aciklama = val.aciklama;
+            if (aciklama.length > 30) {
+              aciklama = aciklama.substr(0,30)+"...";
+            }
+        }
+        $('#tableBody').append('<tr class="list" style="cursor: pointer;" id="'+val._id+'" ><td>'+(index+1)+'</td>'
+      + '<td>'+val.nameSurname+'</td>'
+      + '<td>'+val.ilce+'/'+val.il+'</td>'
+      + '<td>'+val.kanGrubu + '</td>'
+      + '<td>'+ aciklama + '</td>'
+    );
+
+    });
+        $('#searchResult').show();
+  }
+  $.post('kanarayanlar', {
+      data: 'first'
+    })
+    .then((searchResult) => {
+          search(searchResult);
+    });
+$("#searchButton").click(function() {
+  let il = '';
+  let ilce = '';
+  if ($('#il option:selected').text() != 'Tümü') {
+      il = $('#il option:selected').text();
+      if ($('#ilce option:selected').text() != 'Tümü') {
+       ilce = $('#ilce option:selected').text();
+      }
+  }
+  let  data = {
+      il: il,
+      ilce: ilce,
+      kanGrubu: $('#kanGrubu').val()
+  }
+  $.post('kanarayanlar', {
+      data: data
+    })
+    .then((searchResult) => {
+        search(searchResult);
+    });
+  });
+  $('#tableBody').on("click",".list", (event) => {
+      $.post('/ilangetir',"id="+ event.currentTarget.id)
+        .done((searchResult) => {
+          $('#title').text(searchResult.nameSurname);
+          $('#telefon').text(searchResult.phoneNumber);
+          $('#adres').text(searchResult.ilce+"/"+searchResult.il.toUpperCase());
+          $('#kangrubu').text(searchResult.kanGrubu);
+          $('#mail').text(searchResult.mail);
+          $('#aciklama').text(searchResult.aciklama);
+          $('#modal').modal('show');
+        });
+  });
+});
+</script>
+<div class="container-fluid mt-2">
+  <h2 class="text-center">Kan Arayanlar</h2>
+  <div class="row mx-auto">
+    <div class="col-sm-3">
+      <div class="card m-2 mx-auto">
+        <div class="card-body">
+          <form>
+
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="">İlçe</span>
+              </div>
+              <select class="form-control" id="ilce" name="ilce" required disabled>
+                  <option>Tümü</option>
+            </select>
+            </div>
+
+
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="">İl</span>
+              </div>
+              <select class="form-control" id="il" name="il" required>
+                <option >Tümü</option>
+                <% sehirler.forEach((val) => { %>
+                  <option value=<%= val.plaka %> ><%= val.il %></option>
+                <% }); %>
+              </select>
+            </div>
+
+
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="">Kan Grubu</span>
+              </div>
+              <select class="form-control" id="kanGrubu" name="kanGrubu">
+                    <% kanGruplari.forEach((val) => { %>
+                      <option><%=val %></option>
+                    <% }); %>
+                  </select>
+            </div>
+          </form>
+          <button type="button" id="searchButton" class="btn btn-success btn-block">Ara</button>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-sm-9 mx-auto" id="searchResult" style="display:none">
+      <div class="card">
+        <div class="card-header text-center" id="resultCount">
+
+        </div>
+        <div class="card-body">
+          <div class="row" >
+            <div class="table-responsive">
+               <table class="table table-hover">
+                 <thead>
+                   <tr>
+                     <th scope="col">#</th>
+                     <th scope="col">Ad Soyad</th>
+                     <th scope="col">İlçe/İl</th>
+                     <th scope="col">Kan Grubu</th>
+                     <th scope="col">Açıklama</th>
+                   </tr>
+                 </thead>
+                 <tbody id="tableBody">
+                 </tbody>
+               </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal fade"  tabindex="-1" role="dialog" id="modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-center" id="title"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          <ul class="list-group list-group-flush  mx-auto">
+            <li class="list-group-item" id="telefon"></li>
+            <li class="list-group-item" id="mail"></li>
+            <li class="list-group-item" id="adres"></li>
+            <li class="list-group-item" id="kangrubu"></li>
+            <li class="list-group-item" id="aciklama"></li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% include ./partials/footer %>
